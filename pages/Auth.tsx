@@ -1,8 +1,13 @@
 import React, { useCallback, useState } from 'react'
+import { useRouter } from 'next/router'
 import Input from './components/Input'
+import axios from 'axios'
+import { signIn } from 'next-auth/react'
+import { log } from 'console'
 
 const Auth = () => {
     const [email, setEmail] = useState('')
+    const router = useRouter()
     const [name, setName] = useState('')
     const [password, setPassword] = useState('')
     const [variant, setVariant] = useState('login')
@@ -10,6 +15,33 @@ const Auth = () => {
     const toggleVariant = useCallback(() => {
         setVariant((currentVarient) => currentVarient === 'login' ? 'register' : 'login')
     }, [])
+
+    const login = useCallback(async () => {
+        try {
+            await signIn('credentials', {
+                email,
+                password,
+                redirect: false,
+                callbackUrl: '/'
+            })
+            router.push('/')
+        } catch (error) {
+            console.log(error)
+        }
+    }, [email, password, router])
+
+    const register = useCallback(async () => {
+        try {
+            await axios.post('/api/register', {
+                email,
+                name,
+                password
+            })
+            login()
+        } catch (error) {
+            console.log(error)
+        }
+    }, [email, name, password])
 
     return (
         <div className="relative w-full h-full bg-[url('/images/hero.jpg')] bg-no-repeat bg-center bg-fixed bg-cover">
@@ -30,7 +62,7 @@ const Auth = () => {
                             <Input label='Email' onChange={(e: any) => { setEmail(e.target.value) }} id='email' type='email' value={email} />
                             <Input label='Password' onChange={(e: any) => { setPassword(e.target.value) }} id='password' value={password} />
                         </div>
-                        <button className="bg-red-600 py-3 text-white rounded-md w-full mt-10 hover:bg-red-700 transition">
+                        <button onClick={variant === 'login' ? login : register} className="bg-red-600 py-3 text-white rounded-md w-full mt-10 hover:bg-red-700 transition">
                             {variant === 'login' ? 'Login' : 'Sign up'}
                         </button>
                         <p className='text-neutral-500 mt-12'>
